@@ -15,7 +15,8 @@ export default {
               "background-dark": "#102218",
           },
           fontFamily: {
-              "display": ["Space Grotesk"]
+              "display": ["Space Grotesk"],
+              "sans": ["Space Grotesk", "sans-serif"],
           },
           borderRadius: {
               "DEFAULT": "0.25rem",
