@@ -1,6 +1,5 @@
-import InventoryDashboard from "@/components/stitchLayout"
+import AddInventory from "@/components/AddInventory";
 
 export default function Home() {
-  return <InventoryDashboard />
+  return <AddInventory />;
 }
-
