@@ -125,27 +125,7 @@ export default function InventoryPage() {
         <Link href="/add" className="fixed bottom-24 right-6 bg-[#11d462] text-white size-14 rounded-full shadow-lg shadow-[#11d462]/40 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-20">
           <span className="material-symbols-outlined text-3xl">add</span>
         </Link>
-        {/* Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-6 py-3 z-10">
-          <div className="flex justify-between items-center max-w-md mx-auto">
-            <a className="flex flex-col items-center gap-1 text-[#11d462]" href="#">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>warehouse</span>
-              <span className="text-[10px] font-bold">Inventory</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#11d462] transition-colors" href="#">
-              <span className="material-symbols-outlined">analytics</span>
-              <span className="text-[10px] font-medium">Analytics</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#11d462] transition-colors" href="#">
-              <span className="material-symbols-outlined">shopping_cart</span>
-              <span className="text-[10px] font-medium">Orders</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#11d462] transition-colors" href="#">
-              <span className="material-symbols-outlined">account_circle</span>
-              <span className="text-[10px] font-medium">Profile</span>
-            </a>
-          </div>
-        </nav>
+
       </div>
     </>
   );

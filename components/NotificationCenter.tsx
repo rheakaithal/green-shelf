@@ -132,31 +132,7 @@ export default function NotificationCenter() {
           </div>
         </main>
 
-        {/* Bottom Navigation Bar */}
-        <nav className="sticky bottom-0 bg-background-light dark:bg-background-dark border-t border-primary/10 pb-6 pt-2 px-4">
-          <div className="flex justify-between items-center max-w-2xl mx-auto">
-            <a className="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
-              <span className="material-symbols-outlined">home</span>
-              <span className="text-[10px] font-medium">Home</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
-              <span className="material-symbols-outlined">inventory_2</span>
-              <span className="text-[10px] font-medium">Inventory</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
-              <span className="material-symbols-outlined">bar_chart</span>
-              <span className="text-[10px] font-medium">Analytics</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-primary" href="#">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>notifications</span>
-              <span className="text-[10px] font-bold">Notifications</span>
-            </a>
-            <a className="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
-              <span className="material-symbols-outlined">person</span>
-              <span className="text-[10px] font-medium">Profile</span>
-            </a>
-          </div>
-        </nav>
+
     </div>
   );
 }

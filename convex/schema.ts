@@ -10,6 +10,7 @@ export default defineSchema({
     category: v.optional(v.string()), 
     score: v.optional(v.number()), // Eco score (0-100)
     stockStatus: v.optional(v.union(v.literal("Eco-Friendly"), v.literal("Low Stock"))),
+    createdAt: v.number(),
   })
   .searchIndex("search_name", {
     searchField: "name",

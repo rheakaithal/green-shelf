@@ -47,7 +47,7 @@ export const addItem = mutation({
     stockStatus: v.optional(v.union(v.literal("Eco-Friendly"), v.literal("Low Stock"))),
   },
   handler: async (ctx, args) => {
-    const newItemId = await ctx.db.insert("items", { ...args });
+    const newItemId = await ctx.db.insert("items", { ...args, createdAt: Date.now() });
     return newItemId;
   },
 });
@@ -73,5 +73,17 @@ export const deleteItem = mutation({
   args: { id: v.id("items") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
+  },
+});
+
+
+export const seedItem = mutation({
+  handler: async (ctx) => {
+    await ctx.db.insert("items", {
+      name: "Test Item",
+      quantity: 3,
+      location: "Shelf A",
+      createdAt: Date.now(),
+    });
   },
 });

@@ -1,5 +1,5 @@
-import AddInventory from "@/components/AddInventory";
+import Dashboard from "@/components/Dashboard";
 
 export default function Home() {
-  return <AddInventory />;
+  return <Dashboard />;
 }

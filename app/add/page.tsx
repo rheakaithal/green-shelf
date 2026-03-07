@@ -1,5 +1,5 @@
-import AddItem from "../../components/AddItem";
+import AddInventory from "@/components/AddInventory";
 
-export default function AddItemPage() {
-  return <AddItem />;
+export default function AddRoute() {
+  return <AddInventory />;
 }

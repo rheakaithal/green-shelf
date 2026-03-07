@@ -81,24 +81,7 @@ export default function AddInventory() {
           </div>
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-primary/10 px-6 py-3 flex justify-between items-center md:hidden">
-          <Link href="/" className="flex flex-col items-center text-primary">
-            <span className="material-symbols-outlined">inventory_2</span>
-            <span className="text-[10px] mt-1 font-medium">Inventory</span>
-          </Link>
-          <div className="flex flex-col items-center text-slate-400">
-            <span className="material-symbols-outlined">analytics</span>
-            <span className="text-[10px] mt-1 font-medium">Impact</span>
-          </div>
-          <div className="flex flex-col items-center text-slate-400">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="text-[10px] mt-1 font-medium">Alerts</span>
-          </div>
-          <div className="flex flex-col items-center text-slate-400">
-            <span className="material-symbols-outlined">settings</span>
-            <span className="text-[10px] mt-1 font-medium">Settings</span>
-          </div>
-        </nav>
+
       </div>
     </div>
   );
