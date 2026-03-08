@@ -58,6 +58,8 @@ npm run test:watch
 
 *(Optional) Seed Mock Data:* To test the UI and AI integration quickly, navigate to the **Settings** page (`/settings`) in your browser and click the **Seed Mock Data** button under Developer Tools. This will inject realistic inventory and impact history logs into your database instantly.
 
+**Sample JSON File can be found under libs\seedData**
+
 ## AI Disclosure
 ● Did you use an AI assistant (Copilot, ChatGPT, etc.)? (Yes/No)
 Yes
