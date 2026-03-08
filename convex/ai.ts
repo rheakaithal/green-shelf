@@ -26,9 +26,9 @@ export const extractItemInfo = action({
               {
                 "name": string,
                 "quantity": number,
+                "unit": string (e.g. "lbs", "oz", "cartons", "" if unknown),
                 "location": string,
-                "score": number (0-100 eco score, guess if unknown based on item),
-                "stockStatus": "Eco-Friendly" | "Low Stock"
+                "expirationDate": string (format: YYYY-MM-DD, try to extrapolate from today if relative)
               }`
             },
             {

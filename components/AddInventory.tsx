@@ -1,15 +1,16 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../convex/_generated/api';
 
 export default function AddInventory({ onClose }: { onClose: () => void }) {
   const addItem = useMutation(api.inventory.addItem);
   const updateItem = useMutation(api.inventory.updateItem);
   const existingItems = useQuery(api.inventory.getItems, {});
+  const extractItemInfo = useAction(api.ai.extractItemInfo);
 
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('0');
@@ -20,6 +21,106 @@ export default function AddInventory({ onClose }: { onClose: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorText, setErrorText] = useState('');
   const [duplicateItem, setDuplicateItem] = useState<any>(null);
+
+  // Voice to Text State
+  const [isListening, setIsListening] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Initialize Speech Recognition
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
+        setTranscript('');
+      };
+
+      recognitionRef.current.onresult = (event: any) => {
+        let currentTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        setTranscript(currentTranscript);
+      };
+
+      recognitionRef.current.onend = async () => {
+        setIsListening(false);
+        // Process transcript if we got something
+        const finalTranscript = transcript || (recognitionRef.current as any)?._finalTranscript;
+        if (finalTranscript?.trim()) {
+           await processVoiceInput(finalTranscript.trim());
+        }
+      };
+      
+      // Store final transcript hack for robust onend firing
+      recognitionRef.current.addEventListener('result', (event: any) => {
+        let t = '';
+        for (let i = 0; i < event.results.length; i++) {
+          t += event.results[i][0].transcript;
+        }
+        (recognitionRef.current as any)._finalTranscript = t;
+      });
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsListening(false);
+        if (event.error !== 'no-speech') {
+           setErrorText(`Microphone error: ${event.error}. Please check your browser permissions.`);
+        }
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      setErrorText('');
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (e) {
+          console.error("Failed to start recognition", e);
+        }
+      } else {
+        setErrorText("Voice recognition is not supported in your browser. Please try Chrome or Safari.");
+      }
+    }
+  };
+
+  const processVoiceInput = async (text: string) => {
+    setIsProcessingVoice(true);
+    setErrorText('');
+    try {
+      const extractedData = await extractItemInfo({ naturalLanguageText: text });
+      
+      // Auto-fill form fields
+      if (extractedData.name) setName(extractedData.name);
+      if (extractedData.quantity) setQuantity(String(extractedData.quantity));
+      if (extractedData.unit) setUnit(extractedData.unit);
+      if (extractedData.location) setLocation(extractedData.location);
+      if (extractedData.expirationDate) {
+        // Attempt to format YYYY-MM-DD
+        const dateMatch = extractedData.expirationDate.match(/\d{4}-\d{2}-\d{2}/);
+        if (dateMatch) {
+            setExpirationDate(dateMatch[0]);
+        }
+      }
+    } catch (error) {
+       console.error("Failed to process voice info", error);
+       setErrorText("Failed to understand voice input. Try typing instead.");
+    } finally {
+       setIsProcessingVoice(false);
+       setTranscript('');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +207,53 @@ export default function AddInventory({ onClose }: { onClose: () => void }) {
         </header>
 
         <main className="flex flex-col w-full max-w-md mx-auto p-4 space-y-6">
+          
+          {/* Voice Input Section */}
+          <section className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-4">
+             <div className="relative">
+                {isListening && (
+                  <div className="absolute inset-0 bg-[#11d462]/20 rounded-full animate-ping scale-150"></div>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  className={`relative flex items-center justify-center w-20 h-20 rounded-full text-white shadow-lg transition-all ${
+                    isListening 
+                      ? 'bg-red-500 hover:bg-red-600 shadow-red-500/30' 
+                      : 'bg-gradient-to-tr from-[#11d462] to-teal-400 hover:scale-105 active:scale-95 shadow-[#11d462]/30'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-4xl">
+                    {isListening ? 'mic_off' : 'mic'}
+                  </span>
+                </button>
+             </div>
+             
+             <div className="min-h-[2rem] flex items-center justify-center w-full px-4">
+               {isListening ? (
+                  <p className="text-slate-800 dark:text-slate-200 font-medium italic animate-pulse">
+                    "{transcript || 'Listening...'}"
+                  </p>
+               ) : isProcessingVoice ? (
+                  <div className="flex items-center gap-2 text-[#11d462] font-medium">
+                    <span className="material-symbols-outlined animate-spin">refresh</span>
+                    Parsing your item...
+                  </div>
+               ) : (
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Tap the microphone and say: <br/>
+                    <span className="text-slate-700 dark:text-slate-300 italic">"I bought 2 boxes of cereal for the pantry"</span>
+                  </p>
+               )}
+             </div>
+          </section>
+
+          <div className="flex items-center gap-4">
+             <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">OR ENTER MANUALLY</span>
+             <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <section className="space-y-4">
               <div className="flex flex-col w-full">
