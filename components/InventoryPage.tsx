@@ -100,10 +100,6 @@ export default function InventoryPage() {
         <header className="sticky top-0 z-40 bg-[#f6f8f7] dark:bg-[#102218] px-4 pt-6 pb-2">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold tracking-tight">Inventory</h1>
-            <button className="relative p-2 rounded-full hover:bg-[#11d462]/10 transition-colors">
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-[#11d462]"></span>
-            </button>
           </div>
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -153,7 +149,7 @@ export default function InventoryPage() {
           ) : filteredItems.length === 0 ? (
             <div className="text-center p-8 text-slate-500">
                <span className="material-symbols-outlined text-4xl mb-2 opacity-50">inventory_2</span>
-               <p>No items found.</p>
+               <p>No inventory items yet.</p>
             </div>
           ) : (
             filteredItems.map((item) => (

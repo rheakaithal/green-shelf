@@ -58,9 +58,6 @@ export const extractItemInfo = action({
 export const generateWasteInsight = action({
   args: {},
   handler: async (ctx) => {
-    console.log("ACTION STARTED");
-    console.log("OPENROUTER KEY:", process.env.OPENROUTER_API_KEY);
-
     try {
       const data: any = await ctx.runQuery(internal.inventory.getWasteDataForInsight);
       
