@@ -1,6 +1,9 @@
-**Candidate Name:** Rhea Kaithal
-**Scenario Chosen:** AI-Powered "Green-Tech" Inventory Assistant
-**Estimated Time Spent:** ~6 hours
+**Candidate Name:** Rhea Kaithal  
+
+**Scenario Chosen:** AI-Powered "Green-Tech" Inventory Assistant  
+
+**Estimated Time Spent:** ~6 hours  
+
 
 **Live Demo:** [https://green-shelf-panw.vercel.app/](https://green-shelf-panw.vercel.app/)
 
