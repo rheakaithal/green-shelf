@@ -44,7 +44,10 @@ export const extractItemInfo = action({
       }
 
       const data = await response.json();
-      const content = data.choices[0].message.content;
+      let content = data.choices[0].message.content;
+      
+      // Ensure we strip out any markdown formatting the LLM might inject
+      content = content.replace(/```json/gi, "").replace(/```/g, "").trim();
       
       const parsed = JSON.parse(content);
       return parsed;
