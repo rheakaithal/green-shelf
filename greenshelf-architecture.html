@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenShelf — System Architecture</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f4f7f4;
+    font-family: 'DM Sans', sans-serif;
+    color: #1a2e1c;
+    padding: 36px 24px 48px;
+  }
+
+  h1 { text-align: center; font-size: 1.6rem; color: #2e7d32; margin-bottom: 6px; }
+  .subtitle {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: #7cb87e;
+    margin-bottom: 24px;
+  }
+
+  /* Export button */
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .export-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    box-shadow: 0 2px 8px rgba(46,125,50,0.25);
+  }
+  .export-btn:hover { background: #1b5e20; }
+  .export-btn svg { width: 16px; height: 16px; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 18px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.72rem; color: #3a5c3c; font-family: 'IBM Plex Mono', monospace; }
+  .legend-box { width: 16px; height: 12px; border-radius: 3px; }
+
+  /* GRID */
+  #diagram {
+    max-width: 980px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: auto;
+    border: 1.5px solid #c8e6c9;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  /* Phase headers */
+  .ph {
+    padding: 10px 8px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    border-bottom: 1.5px solid #c8e6c9;
+  }
+  .ph:not(:last-child) { border-right: 1.5px solid #c8e6c9; }
+  .ph1 { color: #2e7d32; background: #f1f8f1; }
+  .ph2 { color: #00695c; background: #f0f9f8; }
+  .ph3 { color: #6a1b9a; background: #f8f3fc; }
+  .ph4 { color: #e65100; background: #fff8f2; }
+
+  /* Cell */
+  .cell {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    border-bottom: 1px solid #e8f5e9;
+    background: #ffffff;
+  }
+  .cell:not(:last-child) { border-right: 1px solid #e8f5e9; }
+
+  /* Node */
+  .node { width: 100%; padding: 9px 10px; border-radius: 7px; text-align: center; }
+  .node-title { font-size: 0.8rem; font-weight: 700; line-height: 1.3; }
+  .node-sub   { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; margin-top: 3px; opacity: 0.75; }
+
+  .n-user  { background: #f5f5f5; border: 1.5px solid #90a4ae; color: #37474f; }
+  .n-user .node-sub { color: #607d8b; }
+  .n-fe    { background: #f1f8e9; border: 1.5px solid #66bb6a; color: #1b5e20; }
+  .n-fe .node-sub { color: #388e3c; }
+  .n-be    { background: #e0f7fa; border: 1.5px solid #26c6da; color: #00363a; }
+  .n-be .node-sub { color: #00838f; }
+  .n-ai    { background: #fff3e0; border: 1.5px solid #ffa726; color: #bf360c; }
+  .n-ai .node-sub { color: #e65100; }
+  .n-db    { background: #ede7f6; border: 1.5px solid #7e57c2; color: #311b92;
+             border-radius: 7px 7px 12px 12px; padding-bottom: 12px; }
+  .n-db .node-sub { color: #6a1b9a; }
+
+  /* Arrow rows */
+  .arr-row .cell { border-bottom: none; padding: 0; min-height: 38px; background: #fafafa; }
+  .arr-row .cell:not(:last-child) { border-right: 1px solid #e8f5e9; }
+
+  .arrow-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; width: 100%; padding: 4px 0; gap: 2px;
+  }
+  .arr-shaft { width: 2px; height: 16px; }
+  .arr-head  { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; }
+  .arr-lbl   { font-family: 'IBM Plex Mono', monospace; font-size: 0.58rem; text-align: center; line-height: 1.3; padding: 0 2px; }
+
+  .c-green  { background: #43a047; } .h-green  { border-top: 8px solid #43a047; } .t-green  { color: #2e7d32; }
+  .c-cyan   { background: #00acc1; } .h-cyan   { border-top: 8px solid #00acc1; } .t-cyan   { color: #00695c; }
+  .c-orange { background: #fb8c00; } .h-orange { border-top: 8px solid #fb8c00; } .t-orange { color: #e65100; }
+  .c-purple { background: #7e57c2; } .h-purple { border-top: 8px solid #7e57c2; } .t-purple { color: #6a1b9a; }
+  .c-grey   { background: #78909c; } .h-grey   { border-top: 8px solid #78909c; } .t-grey   { color: #546e7a; }
+
+  /* Security footer */
+  .full-row {
+    grid-column: 1 / -1;
+    padding: 12px 20px;
+    background: #fff8f8;
+    border-top: 1.5px solid #ffcdd2;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.73rem;
+    color: #c62828;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .full-row .sec-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .full-row strong { color: #b71c1c; }
+</style>
+</head>
+<body>
+
+<h1>🌿 GreenShelf — System Architecture</h1>
+<p class="subtitle">AI-Powered Inventory Assistant · High-Level Flow</p>
+
+<div class="toolbar">
+  <button class="export-btn" onclick="exportImage()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Export as PNG
+  </button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-box" style="background:#f5f5f5;border:1.5px solid #90a4ae"></div>User</div>
+  <div class="legend-item"><div class="legend-box" style="background:#f1f8e9;border:1.5px solid #66bb6a"></div>Frontend (Next.js)</div>
+  <div class="legend-item"><div class="legend-box" style="background:#e0f7fa;border:1.5px solid #26c6da"></div>Backend (Convex)</div>
+  <div class="legend-item"><div class="legend-box" style="background:#fff3e0;border:1.5px solid #ffa726"></div>AI (OpenRouter LLM)</div>
+  <div class="legend-item"><div class="legend-box" style="background:#ede7f6;border:1.5px solid #7e57c2"></div>Database</div>
+</div>
+
+<div id="diagram">
+
+  <!-- PHASE HEADERS -->
+  <div class="ph ph1">① Add Item</div>
+  <div class="ph ph2">② Save to DB</div>
+  <div class="ph ph3">③ Deplete &amp; Sync</div>
+  <div class="ph ph4">④ AI Insights</div>
+
+  <!-- ROW: USER -->
+  <div class="cell"><div class="node n-user"><div class="node-title">👤 User</div><div class="node-sub">Speaks / types<br>natural language</div></div></div>
+  <div class="cell"><div class="node n-user"><div class="node-title">👤 User</div><div class="node-sub">Confirms parsed<br>item before saving</div></div></div>
+  <div class="cell"><div class="node n-user"><div class="node-title">👤 User</div><div class="node-sub">Marks item used /<br>donated / expired</div></div></div>
+  <div class="cell"><div class="node n-user"><div class="node-title">👤 User</div><div class="node-sub">Clicks "Generate<br>Insights" on item</div></div></div>
+
+  <!-- ARROW -->
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-green"></div><div class="arr-head h-green"></div><div class="arr-lbl t-green">text input</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-cyan"></div><div class="arr-head h-cyan"></div><div class="arr-lbl t-cyan">confirm item</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-grey"></div><div class="arr-head h-grey"></div><div class="arr-lbl t-grey">action click</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-orange"></div><div class="arr-head h-orange"></div><div class="arr-lbl t-orange">trigger insight</div></div></div>
+
+  <!-- ROW: FRONTEND -->
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Client</div><div class="node-sub">Dashboard UI<br>Sends raw string</div></div></div>
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Client</div><div class="node-sub">Review screen<br>Submits typed item</div></div></div>
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Dashboard</div><div class="node-sub">Live UI updates<br>via ⚡ WebSocket</div></div></div>
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Client</div><div class="node-sub">Impact page<br>Displays advice</div></div></div>
+
+  <!-- ARROW -->
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-cyan"></div><div class="arr-head h-cyan"></div><div class="arr-lbl t-cyan">raw string</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-cyan"></div><div class="arr-head h-cyan"></div><div class="arr-lbl t-cyan">mutation call</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-grey"></div><div class="arr-head h-grey"></div><div class="arr-lbl t-grey">logWaste mutation</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-cyan"></div><div class="arr-head h-cyan"></div><div class="arr-lbl t-cyan">trigger action</div></div></div>
+
+  <!-- ROW: CONVEX BACKEND -->
+  <div class="cell"><div class="node n-be"><div class="node-title">Convex Action</div><div class="node-sub">extractItemInfo<br>Sanitizes input</div></div></div>
+  <div class="cell"><div class="node n-be"><div class="node-title">Convex Mutation</div><div class="node-sub">addItem<br>Validates &amp; writes</div></div></div>
+  <div class="cell"><div class="node n-be"><div class="node-title">Convex Mutation</div><div class="node-sub">logWaste<br>Appends to ledger</div></div></div>
+  <div class="cell"><div class="node n-be"><div class="node-title">Convex Action</div><div class="node-sub">generateItemInsight<br>Reads waste history</div></div></div>
+
+  <!-- ARROW -->
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-orange"></div><div class="arr-head h-orange"></div><div class="arr-lbl t-orange">sanitized prompt</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-purple"></div><div class="arr-head h-purple"></div><div class="arr-lbl t-purple">write to DB</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-purple"></div><div class="arr-head h-purple"></div><div class="arr-lbl t-purple">append + update qty</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-orange"></div><div class="arr-head h-orange"></div><div class="arr-lbl t-orange">history + prompt</div></div></div>
+
+  <!-- ROW: AI + DB + DB + AI -->
+  <div class="cell"><div class="node n-ai"><div class="node-title">OpenRouter LLM</div><div class="node-sub">Parses text →<br>structured JSON</div></div></div>
+  <div class="cell"><div class="node n-db"><div class="node-title">🗄 Convex DB</div><div class="node-sub">items table<br>active inventory</div></div></div>
+  <div class="cell"><div class="node n-db"><div class="node-title">🗄 Convex DB</div><div class="node-sub">wasteLogs table<br>immutable ledger</div></div></div>
+  <div class="cell"><div class="node n-ai"><div class="node-title">OpenRouter LLM</div><div class="node-sub">Analyzes trends →<br>procurement advice</div></div></div>
+
+  <!-- ARROW -->
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-green"></div><div class="arr-head h-green"></div><div class="arr-lbl t-green">structured JSON</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-green"></div><div class="arr-head h-green"></div><div class="arr-lbl t-green">⚡ live push</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-green"></div><div class="arr-head h-green"></div><div class="arr-lbl t-green">⚡ live push</div></div></div>
+  <div class="arr-row cell"><div class="arrow-wrap"><div class="arr-shaft c-orange"></div><div class="arr-head h-orange"></div><div class="arr-lbl t-orange">advice markdown</div></div></div>
+
+  <!-- ROW: FINAL OUTPUT -->
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Client</div><div class="node-sub">Shows parsed preview<br>for user to confirm</div></div></div>
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Dashboard</div><div class="node-sub">⚡ Inventory list<br>auto-refreshes</div></div></div>
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Dashboard</div><div class="node-sub">⚡ Chart &amp; stock<br>levels update live</div></div></div>
+  <div class="cell"><div class="node n-fe"><div class="node-title">Next.js Client</div><div class="node-sub">Renders advice on<br>Impact page</div></div></div>
+
+  <!-- SECURITY FOOTER -->
+  <div class="full-row">
+    <span class="sec-icon">🔒</span>
+    <div>
+      <strong>Security Layer (lib/security.ts) — applied across all phases:&nbsp;</strong>
+      Input sanitization · Prompt injection filter · String &amp; numeric length limits · API keys in server-side env vars only · XSS protection via React/Next.js
+    </div>
+  </div>
+
+</div><!-- end #diagram -->
+
+<script>
+async function exportImage() {
+  const btn = document.querySelector('.export-btn');
+  btn.textContent = 'Exporting…';
+  btn.disabled = true;
+
+  // Temporarily hide toolbar + legend for clean export
+  const toolbar = document.querySelector('.toolbar');
+  const legend  = document.querySelector('.legend');
+  const title   = document.querySelector('h1');
+  const sub     = document.querySelector('.subtitle');
+  const diagram = document.getElementById('diagram');
+
+  // Add padding wrapper
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'background:#f4f7f4;padding:32px;display:inline-block;';
+  diagram.parentNode.insertBefore(wrapper, diagram);
+  wrapper.appendChild(diagram);
+
+  // Clone title/sub into wrapper temporarily
+  const t = title.cloneNode(true);
+  const s = sub.cloneNode(true);
+  t.style.marginBottom = '6px';
+  s.style.marginBottom = '20px';
+  wrapper.insertBefore(s, diagram);
+  wrapper.insertBefore(t, s);
+
+  toolbar.style.display = 'none';
+  legend.style.display  = 'none';
+  title.style.display   = 'none';
+  sub.style.display     = 'none';
+
+  try {
+    const canvas = await html2canvas(wrapper, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f4f7f4',
+      logging: false
+    });
+
+    const link = document.createElement('a');
+    link.download = 'greenshelf-architecture.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('Export failed: ' + e.message);
+  }
+
+  // Restore
+  wrapper.parentNode.insertBefore(diagram, wrapper);
+  wrapper.remove();
+  toolbar.style.display = '';
+  legend.style.display  = '';
+  title.style.display   = '';
+  sub.style.display     = '';
+
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export as PNG`;
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
