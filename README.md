@@ -61,21 +61,26 @@ npm run test:watch
 ## **Sample JSON File can be found under libs/seedData**
 
 ## AI Disclosure
-● Did you use an AI assistant (Copilot, ChatGPT, etc.)? (Yes/No)
+● Did you use an AI assistant (Copilot, ChatGPT, etc.)? (Yes/No)  
+
 Yes
 
-● How did you verify the suggestions?
+● How did you verify the suggestions?  
+
 I tested the code iteratively through unit testing and manually testing locally in the dev environment. I confirmed API interactions through runtime testing and console logs. 
 
-● Give one example of a suggestion you rejected or changed:
+● Give one example of a suggestion you rejected or changed:  
+
 I rejected the suggestion to store AI-generated insights into the database with every item update. I opted out of this to avoid unneccessary database writes. 
 
 ## Tradeoffs
-I chose to not include the following features to maintain within the allotted timeframe:
+I chose to not include the following features to maintain within the allotted timeframe:  
+
 - User logins/Independent accounts
 - Real-time/Push Notifications for Expiration
 I instead focused on create,view,update,search features and incorporating effective AI tools into the app.
 
-If I had more time for developing this tool, I would build ...
 
-Known limitations: 
+If I had more time for developing this tool, I would build authentication for independent users so that the database can identify source of requests. This would ensure greater safety for the database and allow customer scaling.
+
+The known limitations of GreenShelf is that it does not allow multi-user isolated inventory tracking yet. It is acting as a single-tenant, shared user organization tool. Also key AI features depend on external LLM providers via OpenRouter. Network latency or provider outages could temporarily degrade AI functionality, though manual inventory entry remains available as a fallback. Some historical analytics are computed dynamically in the client. As historical logs grow, this could introduce performance bottlenecks without additional backend aggregation. 
