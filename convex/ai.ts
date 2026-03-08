@@ -25,7 +25,6 @@ export const extractItemInfo = action({
                 "name": string,
                 "quantity": number,
                 "location": string,
-                "category": string (e.g. "Energy", "Lighting", "Recycled", "Other"),
                 "score": number (0-100 eco score, guess if unknown based on item),
                 "stockStatus": "Eco-Friendly" | "Low Stock"
               }`

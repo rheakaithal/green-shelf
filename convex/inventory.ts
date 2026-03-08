@@ -4,7 +4,6 @@ import { v } from "convex/values";
 export const getItems = query({
   args: {
     searchTerm: v.optional(v.string()),
-    category: v.optional(v.string()), // e.g., 'All Items', 'Energy', 'Lighting', 'Recycled'
   },
   handler: async (ctx, args) => {
     let items;
@@ -18,11 +17,6 @@ export const getItems = query({
     } else {
       // Otherwise, return all items
       items = await ctx.db.query("items").collect();
-    }
-
-    // 2. Filter by category (if provided and not 'All Items')
-    if (args.category && args.category !== "All Items") {
-      items = items.filter((item) => item.category === args.category);
     }
 
     return items;
@@ -42,8 +36,6 @@ export const addItem = mutation({
     quantity: v.number(),
     location: v.string(),
     expirationDate: v.optional(v.string()),
-    category: v.optional(v.string()),
-    score: v.optional(v.number()),
     stockStatus: v.optional(v.union(v.literal("Eco-Friendly"), v.literal("Low Stock"))),
   },
   handler: async (ctx, args) => {
@@ -59,8 +51,6 @@ export const updateItem = mutation({
     quantity: v.optional(v.number()),
     location: v.optional(v.string()),
     expirationDate: v.optional(v.string()),
-    category: v.optional(v.string()),
-    score: v.optional(v.number()),
     stockStatus: v.optional(v.union(v.literal("Eco-Friendly"), v.literal("Low Stock"))),
   },
   handler: async (ctx, args) => {
@@ -73,6 +63,27 @@ export const deleteItem = mutation({
   args: { id: v.id("items") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
+  },
+});
+
+export const logWaste = mutation({
+  args: {
+    itemId: v.id("items"),
+    itemName: v.string(),
+    action: v.string(),
+    quantity: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("wasteLogs", {
+      ...args,
+      loggedAt: Date.now(),
+    });
+  },
+});
+
+export const getWasteLogs = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("wasteLogs").order("desc").collect();
   },
 });
 
