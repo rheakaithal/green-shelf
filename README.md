@@ -1,6 +1,6 @@
-# Green Shelf
-
-Green Shelf is an intelligent inventory and waste reduction tracking application built with Next.js, Convex, and AI integrations.
+**Candidate Name:** Rhea Kaithal
+**Scenario Chosen:** AI-Powered "Green-Tech" Inventory Assistant
+**Estimated Time Spent:** ~6 hours
 
 **Live Demo:** [https://green-shelf-panw.vercel.app/](https://green-shelf-panw.vercel.app/)
 
@@ -54,3 +54,23 @@ npm run test:watch
 ```
 
 *(Optional) Seed Mock Data:* To test the UI and AI integration quickly, navigate to the **Settings** page (`/settings`) in your browser and click the **Seed Mock Data** button under Developer Tools. This will inject realistic inventory and impact history logs into your database instantly.
+
+## AI Disclosure
+● Did you use an AI assistant (Copilot, ChatGPT, etc.)? (Yes/No)
+Yes
+
+● How did you verify the suggestions?
+I tested the code iteratively through unit testing and manually testing locally in the dev environment. I confirmed API interactions through runtime testing and console logs. 
+
+● Give one example of a suggestion you rejected or changed:
+I rejected the suggestion to store AI-generated insights into the database with every item update. I opted out of this to avoid unneccessary database writes. 
+
+## Tradeoffs
+I chose to not include the following features to maintain within the allotted timeframe:
+- User logins/Independent accounts
+- Real-time/Push Notifications for Expiration
+I instead focused on create,view,update,search features and incorporating effective AI tools into the app.
+
+If I had more time for developing this tool, I would build ...
+
+Known limitations: 
