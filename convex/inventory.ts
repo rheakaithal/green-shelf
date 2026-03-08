@@ -1,5 +1,6 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import testData from "../lib/seedData.json";
 
 export const getItems = query({
   args: {
@@ -91,15 +92,62 @@ export const getWasteLogs = query({
   },
 });
 
-
-export const seedItem = mutation({
+export const clearWasteLogs = mutation({
   handler: async (ctx) => {
-    await ctx.db.insert("items", {
-      name: "Test Item",
-      quantity: 3,
-      location: "Shelf A",
-      createdAt: Date.now(),
+    const logs = await ctx.db.query("wasteLogs").collect();
+    for (const log of logs) {
+      await ctx.db.delete(log._id);
+    }
+  },
+});
+
+
+export const seedTestData = mutation({
+  handler: async (ctx) => {
+    // 1. Clear existing data
+    const oldItems = await ctx.db.query("items").collect();
+    for (const item of oldItems) await ctx.db.delete(item._id);
+    
+    const oldLogs = await ctx.db.query("wasteLogs").collect();
+    for (const log of oldLogs) await ctx.db.delete(log._id);
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    // 2. Parse and Seed Inventory Items from JSON
+    const inventoryMap = new Map<string, any>(); // Map to store names to inserted IDs
+    
+    for (const item of testData.inventory) {
+      const { createdAtOffsetDays, ...itemData } = item;
+      const docId = await ctx.db.insert("items", {
+        ...itemData,
+        createdAt: now - (createdAtOffsetDays * dayMs)
+      });
+      inventoryMap.set(item.name, docId);
+    }
+
+    // 3. Parse and Seed Logs from JSON
+    // We must generate a valid Convex ID for logs that reference items missing from inventory.
+    // We achieve this by creating a generic "Ghost Item", grabbing its ID, and then deleting it.
+    // Convex IDs remain valid even if the document is deleted.
+    const ghostId = await ctx.db.insert("items", {
+      name: "Deleted Item",
+      quantity: 0,
+      location: "Unknown",
+      createdAt: now
     });
+    await ctx.db.delete(ghostId);
+
+    for (const log of testData.logs) {
+      const { loggedAtOffsetDays, ...logData } = log;
+      const matchingItemId = inventoryMap.get(log.itemName) || ghostId;
+      
+      await ctx.db.insert("wasteLogs", {
+        ...logData,
+        itemId: matchingItemId as any,
+        loggedAt: now - (loggedAtOffsetDays * dayMs)
+      });
+    }
   },
 });
 

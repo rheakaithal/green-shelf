@@ -64,34 +64,50 @@ export const generateWasteInsight = action({
       const items: any[] = data.items;
       const wasteLogs: any[] = data.wasteLogs;
       
-      // Simple aggregation logic for the prompt
-      const itemSummaries = items.map((item: any) => {
-        const itemLogs = wasteLogs.filter((log: any) => log.itemId === item._id);
+      // Group all waste logs by item name so we don't lose data for deleted items
+      const logsByItemName: Record<string, any[]> = {};
+      wasteLogs.forEach((log) => {
+        if (!logsByItemName[log.itemName]) {
+          logsByItemName[log.itemName] = [];
+        }
+        logsByItemName[log.itemName].push(log);
+      });
+
+      const itemSummaries = Object.keys(logsByItemName).map((itemName) => {
+        const itemLogs = logsByItemName[itemName];
         const used = itemLogs.filter((l: any) => l.action === "fully used").reduce((sum: number, l: any) => sum + l.quantity, 0);
         const donated = itemLogs.filter((l: any) => l.action === "donated").reduce((sum: number, l: any) => sum + l.quantity, 0);
         const expired = itemLogs.filter((l: any) => l.action === "expired").reduce((sum: number, l: any) => sum + l.quantity, 0);
         
-        return `Item: ${item.name}
-- Current Stock: ${item.quantity} ${item.unit || 'units'}
+        // Find if it still exists in current inventory to show current stock
+        const currentItem = items.find((i: any) => i.name === itemName);
+        const currentStockStr = currentItem ? `${currentItem.quantity} ${currentItem.unit || 'units'}` : "0 (Item removed)";
+        
+        return `Item: ${itemName}
+- Current Stock: ${currentStockStr}
 - Total Fully Used: ${used}
 - Total Donated: ${donated}
 - Total Expired/Wasted: ${expired}`;
       }).join("\\n\\n");
 
-      const prompt = `You are a sustainability inventory assistant. Here is the usage data for a user's local inventory:
+      let prompt = "";
+      if (wasteLogs.length === 0) {
+        prompt = `You are a sustainability inventory assistant. The user has requested an insight, but there is not enough data logged yet. Reply exactly with: "Not enough usage data to generate a recommendation yet. Keep logging your waste and utilization!"`;
+      } else {
+        prompt = `You are a sustainability inventory assistant. Here is the exact usage data for a user's local inventory. You MUST ONLY use the items and numbers provided below. Do not make up items like "coffee" or "milk" unless they are listed here:
 
 ${itemSummaries}
 
-Analyze this data to identify which items are being wasted (expired) frequently, or which items the user has too much of, and provide a single, short, actionable recommendation to reduce waste.
+Analyze this specific data to identify which items are being wasted (expired) frequently, or which items the user has too much of, and provide a single, short, actionable recommendation to reduce waste based STRICTLY on the numbers above.
 
-Format your response exactly like this example, using plain text without markdown asterisks:
-
-You ordered 30 coffee filters last month.
+Format your response somewhat like this example:
+You ordered 30 cartons of [Actual Item Name] last month.
 Only 12 were used.
 
 RECOMMENDATION: Reduce next order by ~40% to avoid overstock.
 
 Keep it concise, supportive, and focus on the most problematic item or a general trend if there are multiple. Do not include any title headers like "AI Insight".`;
+      }
 
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",

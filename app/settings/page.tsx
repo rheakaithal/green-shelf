@@ -8,6 +8,7 @@ import { api } from "../../convex/_generated/api";
 export default function SettingsPage() {
   const currentSettings = useQuery(api.settings.getSettings);
   const updateSettings = useMutation(api.settings.updateSettings);
+  const seedData = useMutation(api.inventory.seedTestData);
 
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [expiringSoonDays, setExpiringSoonDays] = useState(7);
@@ -92,6 +93,27 @@ export default function SettingsPage() {
                   {saveMessage}
                 </span>
               )}
+            </div>
+            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+              <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Developer Tools</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                <div>
+                  <h3 className="text-medium font-medium text-slate-900 dark:text-white">Populate Test Data</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Instantly fill your inventory and impact timeline with realistic mock data to test AI insights.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (window.confirm("This will overwrite all existing inventory and logs. Are you sure?")) {
+                      await seedData();
+                      alert("Test data seeded successfully!");
+                    }
+                  }}
+                  className="bg-indigo-500 hover:bg-indigo-600 text-white font-medium text-sm px-4 py-2 rounded-lg transition-all shadow-sm shrink-0 flex items-center gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  Seed Mock Data
+                </button>
+              </div>
             </div>
           </div>
         </div>

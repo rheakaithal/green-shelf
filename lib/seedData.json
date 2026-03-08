@@ -1,0 +1,83 @@
+{
+  "inventory": [
+    {
+      "name": "Organic Spinach",
+      "quantity": 2,
+      "unit": "bags",
+      "location": "Fridge Basket",
+      "createdAtOffsetDays": 2
+    },
+    {
+      "name": "Almond Milk",
+      "quantity": 1,
+      "unit": "carton",
+      "location": "Fridge Door",
+      "createdAtOffsetDays": 5
+    },
+    {
+      "name": "Sourdough Bread",
+      "quantity": 0,
+      "unit": "loaves",
+      "location": "Pantry",
+      "createdAtOffsetDays": 7
+    },
+    {
+      "name": "Apples",
+      "quantity": 6,
+      "unit": "lbs",
+      "location": "Counter",
+      "createdAtOffsetDays": 1
+    },
+    {
+      "name": "Coffee Beans",
+      "quantity": 3,
+      "unit": "bags",
+      "location": "Pantry Top",
+      "createdAtOffsetDays": 14
+    }
+  ],
+  "logs": [
+    {
+      "itemName": "Organic Spinach",
+      "action": "expired",
+      "quantity": 1,
+      "loggedAtOffsetDays": 1
+    },
+    {
+      "itemName": "Organic Spinach",
+      "action": "fully used",
+      "quantity": 2,
+      "loggedAtOffsetDays": 4
+    },
+    {
+      "itemName": "Almond Milk",
+      "action": "fully used",
+      "quantity": 1,
+      "loggedAtOffsetDays": 5
+    },
+    {
+      "itemName": "Sourdough Bread",
+      "action": "expired",
+      "quantity": 1,
+      "loggedAtOffsetDays": 2
+    },
+    {
+      "itemName": "Sourdough Bread",
+      "action": "donated",
+      "quantity": 1,
+      "loggedAtOffsetDays": 10
+    },
+    {
+      "itemName": "Coffee Beans",
+      "action": "fully used",
+      "quantity": 3,
+      "loggedAtOffsetDays": 30
+    },
+    {
+      "itemName": "Heirloom Tomatoes",
+      "action": "expired",
+      "quantity": 4,
+      "loggedAtOffsetDays": 15
+    }
+  ]
+}

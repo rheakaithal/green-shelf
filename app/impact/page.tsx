@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useQuery, useAction } from "convex/react";
+import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import { formatTime, getLogStyle } from "@/lib/utils";
 
 export default function ImpactPage() {
   const logs = useQuery(api.inventory.getWasteLogs);
+  const clearLogs = useMutation(api.inventory.clearWasteLogs);
   const [logFilter, setLogFilter] = useState<"ALL" | "USED_DONATED" | "EXPIRED">("ALL");
+  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
 
   const totalLogs = logs?.length || 0;
   const wastedItems = logs?.filter(l => l.action === "expired").reduce((acc, curr) => acc + curr.quantity, 0) || 0;
@@ -86,9 +88,44 @@ export default function ImpactPage() {
 
   return (
     <div className="bg-[#f6f8f7] dark:bg-[#102218] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display px-6 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Impact Timeline</h1>
-        <p className="text-slate-500 dark:text-slate-400">Track how your inventory is utilized over time.</p>
+      <header className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Impact Timeline</h1>
+          <p className="text-slate-500 dark:text-slate-400">Track how your inventory is utilized over time.</p>
+        </div>
+        {totalLogs > 0 && (
+          <div className="relative">
+            {!isConfirmingClear ? (
+              <button 
+                onClick={() => setIsConfirmingClear(true)}
+                className="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
+                Clear History
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-red-200 dark:border-red-900/50 shadow-sm animate-in fade-in slide-in-from-right-4">
+                <span className="text-xs font-semibold text-red-600 dark:text-red-400 ml-2 mr-1">Delete all logs?</span>
+                <button 
+                  onClick={() => setIsConfirmingClear(false)}
+                  className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    await clearLogs();
+                    setIsConfirmingClear(false);
+                    setInsight(null); // Clear insight since data is gone
+                  }}
+                  className="px-3 py-1.5 text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {logs === undefined ? (
