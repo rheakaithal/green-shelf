@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getItems = query({
@@ -34,9 +34,11 @@ export const addItem = mutation({
   args: {
     name: v.string(),
     quantity: v.number(),
+    unit: v.optional(v.string()),
     location: v.string(),
     expirationDate: v.optional(v.string()),
     stockStatus: v.optional(v.union(v.literal("Eco-Friendly"), v.literal("Low Stock"))),
+    customLowStockThreshold: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const newItemId = await ctx.db.insert("items", { ...args, createdAt: Date.now() });
@@ -49,9 +51,11 @@ export const updateItem = mutation({
     id: v.id("items"),
     name: v.optional(v.string()),
     quantity: v.optional(v.number()),
+    unit: v.optional(v.string()),
     location: v.optional(v.string()),
     expirationDate: v.optional(v.string()),
     stockStatus: v.optional(v.union(v.literal("Eco-Friendly"), v.literal("Low Stock"))),
+    customLowStockThreshold: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
@@ -96,5 +100,13 @@ export const seedItem = mutation({
       location: "Shelf A",
       createdAt: Date.now(),
     });
+  },
+});
+
+export const getWasteDataForInsight = internalQuery({
+  handler: async (ctx) => {
+    const items = await ctx.db.query("items").collect();
+    const wasteLogs = await ctx.db.query("wasteLogs").collect();
+    return { items, wasteLogs };
   },
 });

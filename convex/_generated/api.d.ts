@@ -10,6 +10,7 @@
 
 import type * as ai from "../ai.js";
 import type * as inventory from "../inventory.js";
+import type * as settings from "../settings.js";
 
 import type {
   ApiFromModules,
@@ -20,6 +21,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   inventory: typeof inventory;
+  settings: typeof settings;
 }>;
 
 /**
