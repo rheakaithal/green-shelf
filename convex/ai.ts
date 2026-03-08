@@ -1,6 +1,7 @@
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { sanitizePromptInjection } from "../lib/security";
 
 
 export const extractItemInfo = action({
@@ -8,6 +9,9 @@ export const extractItemInfo = action({
     naturalLanguageText: v.string(),
   },
   handler: async (ctx, args) => {
+    // Security check to scrub any JSON-breakout attempts or prompt injections
+    const safeInput = sanitizePromptInjection(args.naturalLanguageText);
+
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -33,7 +37,7 @@ export const extractItemInfo = action({
             },
             {
               role: "user",
-              content: args.naturalLanguageText
+              content: safeInput
             }
           ]
         })
@@ -175,7 +179,10 @@ export const generateItemInsight = action({
         return `[${dateStr}] ${log.quantity} units ${log.action}`;
       }).join("\\n");
 
-      const prompt = `You are an expert inventory analyst. You are looking at the specific history for this item: "${args.itemName}".
+      // Security Check: scrub the user-provided item name from injecting commands
+      const safeItemName = sanitizePromptInjection(args.itemName);
+
+      const prompt = `You are an expert inventory analyst. You are looking at the specific history for this item: "${safeItemName}".
 
 CURRENT STATUS:
 - Current Stock: ${currentStockStr}

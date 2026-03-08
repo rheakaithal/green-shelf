@@ -1,6 +1,7 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import testData from "../lib/seedData.json";
+import { validateStorageString, validateQuantity } from "../lib/security";
 
 export const getItems = query({
   args: {
@@ -42,7 +43,20 @@ export const addItem = mutation({
     customLowStockThreshold: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const newItemId = await ctx.db.insert("items", { ...args, createdAt: Date.now() });
+    // Security: Validate lengths and logic
+    const sanitizedName = validateStorageString(args.name, 'name');
+    const sanitizedLoc = validateStorageString(args.location, 'location');
+    const sanitizedUnit = args.unit ? validateStorageString(args.unit, 'unit') : '';
+    const safeQty = validateQuantity(args.quantity);
+
+    const newItemId = await ctx.db.insert("items", { 
+      ...args, 
+      name: sanitizedName, 
+      location: sanitizedLoc, 
+      unit: sanitizedUnit, 
+      quantity: safeQty, 
+      createdAt: Date.now() 
+    });
     return newItemId;
   },
 });
@@ -60,6 +74,13 @@ export const updateItem = mutation({
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
+
+    // Security check on updates
+    if (updates.name !== undefined) updates.name = validateStorageString(updates.name, 'name');
+    if (updates.location !== undefined) updates.location = validateStorageString(updates.location, 'location');
+    if (updates.unit !== undefined) updates.unit = validateStorageString(updates.unit, 'unit');
+    if (updates.quantity !== undefined) updates.quantity = validateQuantity(updates.quantity);
+
     await ctx.db.patch(id, updates);
   },
 });
@@ -79,8 +100,13 @@ export const logWaste = mutation({
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
+    const sanitizedName = validateStorageString(args.itemName, 'name');
+    const safeQty = validateQuantity(args.quantity);
+
     await ctx.db.insert("wasteLogs", {
       ...args,
+      itemName: sanitizedName,
+      quantity: safeQty,
       loggedAt: Date.now(),
     });
   },
