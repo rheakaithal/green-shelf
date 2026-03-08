@@ -9,6 +9,7 @@ import { formatTime, getLogStyle } from "@/lib/utils";
 
 export default function ImpactPage() {
   const logs = useQuery(api.inventory.getWasteLogs);
+  const items = useQuery(api.inventory.getItems, {});
   const clearLogs = useMutation(api.inventory.clearWasteLogs);
   const [logFilter, setLogFilter] = useState<"ALL" | "USED_DONATED" | "EXPIRED">("ALL");
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
@@ -30,57 +31,13 @@ export default function ImpactPage() {
 
   const handleGenerateInsight = async () => {
     setIsGenerating(true);
+    setInsight(null);
     try {
       const result = await generateInsight();
       setInsight(result as string);
     } catch (error) {
-      console.error("AI Generation failed, using rule-based fallback:", error);
-      
-      // Basic rule-based fallback logic
-      if (!logs || logs.length === 0) {
-        setInsight("Not enough data to generate a recommendation yet. Keep logging your inventory usage!");
-      } else {
-        // Find most wasted item
-        const wastedCounts: Record<string, number> = {};
-        const usedCounts: Record<string, number> = {};
-        
-        logs.forEach(log => {
-          if (log.action === "expired") {
-            wastedCounts[log.itemName] = (wastedCounts[log.itemName] || 0) + log.quantity;
-          } else if (log.action === "fully used") {
-            usedCounts[log.itemName] = (usedCounts[log.itemName] || 0) + log.quantity;
-          }
-        });
-
-        let mostWastedItem = "";
-        let maxWaste = 0;
-        for (const [item, count] of Object.entries(wastedCounts)) {
-          if (count > maxWaste) {
-            maxWaste = count;
-            mostWastedItem = item;
-          }
-        }
-
-        if (mostWastedItem) {
-          setInsight(`We noticed you recently had to throw away ${maxWaste} units of ${mostWastedItem}.\n\nRECOMMENDATION: Consider reducing your regular order size for ${mostWastedItem} to prevent future waste.`);
-        } else {
-          // If no waste, find most used item
-          let mostUsedItem = "";
-          let maxUsed = 0;
-          for (const [item, count] of Object.entries(usedCounts)) {
-            if (count > maxUsed) {
-              maxUsed = count;
-              mostUsedItem = item;
-            }
-          }
-          
-          if (mostUsedItem) {
-            setInsight(`Great job! You have zero recorded waste recently. You frequently use ${mostUsedItem} (${maxUsed} units logged).\n\nRECOMMENDATION: Consider buying ${mostUsedItem} in bulk to save money since your usage rate is high.`);
-          } else {
-            setInsight(`You're doing great with your inventory tracking.\n\nRECOMMENDATION: Wait a few more days to accumulate data for deeper insights.`);
-          }
-        }
-      }
+      console.error("AI Generation failed:", error);
+      setInsight("AI Service is temporarily unavailable. Please try again later.");
     } finally {
       setIsGenerating(false);
     }
@@ -128,7 +85,7 @@ export default function ImpactPage() {
         )}
       </header>
 
-      {logs === undefined ? (
+      {logs === undefined || items === undefined ? (
         <div className="flex justify-center p-8">
            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#11d462]"></div>
         </div>
@@ -166,17 +123,17 @@ export default function ImpactPage() {
                </div>
              </div>
 
-            {/* AI Insight Section */}
-            <div className="w-full">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#11d462]">auto_awesome</span>
-                  Smart Recommendations
-                </h2>
+            <div className="w-full bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+              <div className="flex flex-col mb-4 gap-2 border-b border-slate-100 dark:border-slate-700 pb-4">
+                 <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                   <span className="material-symbols-outlined text-[#11d462]">psychiatry</span>
+                   Smart Recommendations
+                 </h2>
+                 <p className="text-sm text-slate-500">Get AI-powered insights based on your global utilization history.</p>
               </div>
 
               {insight ? (
-                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-[#11d462]/10 to-transparent dark:from-[#11d462]/10 dark:to-transparent relative overflow-hidden">
+                <Card className="rounded-2xl shadow-sm border-0 bg-gradient-to-br from-[#11d462]/10 to-transparent dark:from-[#11d462]/10 dark:to-transparent relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                   <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#11d462]/20 rounded-full blur-2xl pointer-events-none"></div>
                   
                   <CardContent className="p-6 relative z-10">
@@ -211,21 +168,29 @@ export default function ImpactPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 border-dashed bg-transparent">
-                  <CardContent className="p-8 flex flex-col items-center justify-center text-center">
+                <div className="flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-transparent mt-4">
                     <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-3">analytics</span>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Generate a smart recommendation based on your usage history to discover ways to reduce waste and save money.
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-4">
+                      Generate a smart recommendation based on your entire usage history to discover ways to reduce overall waste.
                     </p>
                     <Button 
                       onClick={handleGenerateInsight}
-                      disabled={isGenerating}
-                      className="mt-4 bg-[#11d462] hover:bg-[#11d462]/90 text-white rounded-xl shadow-sm px-6"
+                      disabled={isGenerating || logs === undefined}
+                      className="bg-[#11d462] hover:bg-[#11d462]/90 text-white rounded-xl shadow-sm px-6 transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                      {isGenerating ? "Analyzing..." : "Generate Recommendation"}
+                      {isGenerating ? (
+                        <>
+                          <span className="material-symbols-outlined animate-spin text-[20px] mr-2">refresh</span>
+                          Analyzing Data...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-[20px] mr-2">bolt</span>
+                          Generate Global Insight
+                        </>
+                      )}
                     </Button>
-                  </CardContent>
-                </Card>
+                </div>
               )}
             </div>
 

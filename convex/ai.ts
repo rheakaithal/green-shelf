@@ -139,3 +139,87 @@ Keep it concise, supportive, and focus on the most problematic item or a general
     }
   }
 });
+
+export const generateItemInsight = action({
+  args: {
+    itemName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      const data: any = await ctx.runQuery(internal.inventory.getWasteDataForInsight);
+      
+      const items: any[] = data.items;
+      const wasteLogs: any[] = data.wasteLogs;
+      
+      // Filter logs specifically for this item
+      const itemLogs = wasteLogs.filter((log: any) => log.itemName === args.itemName);
+      
+      if (itemLogs.length === 0) {
+        return "Not enough historical data to analyze this item. Keep logging your usage!";
+      }
+
+      const used = itemLogs.filter((l: any) => l.action === "fully used").reduce((sum: number, l: any) => sum + l.quantity, 0);
+      const donated = itemLogs.filter((l: any) => l.action === "donated").reduce((sum: number, l: any) => sum + l.quantity, 0);
+      const expired = itemLogs.filter((l: any) => l.action === "expired").reduce((sum: number, l: any) => sum + l.quantity, 0);
+      
+      // Find current stock
+      const currentItem = items.find((i: any) => i.name === args.itemName);
+      const currentStockStr = currentItem ? `${currentItem.quantity} ${currentItem.unit || 'units'}` : "0 (Item removed)";
+      
+      // Build a chronological timeline for the AI to understand the 'trend'
+      const chronologicalLogs = [...itemLogs].sort((a: any, b: any) => a.loggedAt - b.loggedAt);
+      const timelineText = chronologicalLogs.map((log: any) => {
+        const dateObj = new Date(log.loggedAt);
+        // Format MM-DD
+        const dateStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+        return `[${dateStr}] ${log.quantity} units ${log.action}`;
+      }).join("\\n");
+
+      const prompt = `You are an expert inventory analyst. You are looking at the specific history for this item: "${args.itemName}".
+
+CURRENT STATUS:
+- Current Stock: ${currentStockStr}
+- All-Time Used: ${used}
+- All-Time Donated: ${donated}
+- All-Time Wasted/Expired: ${expired}
+
+TIMELINE OF EVENTS (Oldest to Newest):
+${timelineText}
+
+Analyze this specific trend line. Identify if the user is buying too much and letting it expire, or buying too little and constantly running out.
+Provide a single, short, actionable recommendation to optimize their procurement of THIS SPECIFIC ITEM based strictly on the data.
+
+Format your response somewhat like this:
+You have wasted ${expired} units recently while only using ${used}.
+
+RECOMMENDATION: Reduce your regular order size to prevent overstocking.
+
+Keep it concise, direct, and actionable. Do not include headers like "AI Insight".`;
+
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-3.5-turbo",
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenRouter API error: ${response.statusText}`);
+      }
+
+      const responseData = await response.json();
+      return responseData.choices[0].message.content;
+
+    } catch (error: any) {
+      console.error("Failed to generate item-specific insight:", error);
+      throw new Error(`Failed to analyze item trend: ${error.message}`);
+    }
+  }
+});
