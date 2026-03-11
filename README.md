@@ -64,7 +64,10 @@ npm run test:watch
 ## AI Disclosure
 ● Did you use an AI assistant (Copilot, ChatGPT, etc.)? (Yes/No)  
 
-Yes
+Yes.  
+
+I applied AI to develop this tool by first using Google Stitch (AI tool for quick frontend design) to create frontend design mockups. Then I exported those screens to Antigravity IDE (Google’s AI IDE) to use agentic AI workflow to convert into a full React app. Then added the Backend components (Convex), debugging with Antigravity inline agent tool. I lastly implemented robust testing by asking the Antigravity Developer AI Agent to generate test cases for security and input validation.   
+
 
 ● How did you verify the suggestions?  
 
